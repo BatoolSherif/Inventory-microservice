@@ -1,0 +1,8 @@
+# services:
+#   frontend:
+#     build:
+#       context: ./frontend  # Build context for the React front-end
+#     ports:
+#       - "3001:3000"  # Expose the React front-end on port 3001
+#     depends_on:
+#       - product-service  # Ensure the back-end starts first

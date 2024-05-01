@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456 
+    volumes:
+      - db_data:/var/lib/mysql            # Persistent storage for MySQL data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql  # SQL initialization script
+    ports:
+      - "3307:3306"  # Expose MySQL on port 3306
+  
+  product-service:
+    build:
+      context: ./product-microservice  # Build from the current directory
+    ports:
+      - "3000:3000"  # Expose the microservice on port 3000
+    environment:
+      DB_HOST: db    # MySQL service name
+      DB_PORT: 3306  # MySQL port
+      DB_USER: root  # MySQL root user
+      DB_PASS: 123456  # MySQL root password
+      DB_NAME: productsdb  # Name of the database to connect to
+    depends_on:
+      - db  # Ensure MySQL starts before the Node.js service
+       # React Front-end Service
+  frontend:
+    build:
+      context: ./frontend  # Build context for the React front-end
+    ports:
+      - "3001:3000"  # Expose the React front-end on port 3001
+    depends_on:
+      - product-service  # Ensure back-end service starts first
+volumes:
+  db_data:  # Persistent volume for MySQL data
