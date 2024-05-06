@@ -1,0 +1,19 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "nodemon -L index.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.8",
+    "axois": "0.0.1-security",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "luxon": "^3.4.4",
+    "mongoose": "^5.9.29",
+    "nodemon": "^2.0.4"
+  }
+}
