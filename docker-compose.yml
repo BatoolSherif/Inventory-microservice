@@ -1,36 +1,97 @@
-version: '3.8'
-
+version: "3"
 services:
-  db:
-    image: mysql:8
-    environment:
-      MYSQL_ROOT_PASSWORD: 123456 
-    volumes:
-      - db_data:/var/lib/mysql            # Persistent storage for MySQL data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql  # SQL initialization script
+  weather-microservice:
+    build: ./weather-microservice
+    container_name: weather-microservice_container
     ports:
-      - "3307:3306"  # Expose MySQL on port 3306
-  
+      - "6002:6002"
+    volumes:
+      - ./weather-microservice:/app
+      - /app/node_modules
+
   product-service:
     build:
       context: ./product-microservice  # Build from the current directory
     ports:
-      - "3000:3000"  # Expose the microservice on port 3000
+      - "6001:6001"  
     environment:
-      DB_HOST: db    # MySQL service name
-      DB_PORT: 3306  # MySQL port
-      DB_USER: root  # MySQL root user
-      DB_PASS: 123456  # MySQL root password
-      DB_NAME: productsdb  # Name of the database to connect to
+      DB_HOST: inventory_db    
+      DB_PORT: 3306  
+      DB_USER: root 
+      DB_PASS: 123456  
+      DB_NAME: inventory_db  
     depends_on:
-      - db  # Ensure MySQL starts before the Node.js service
-       # React Front-end Service
-  frontend:
+      - inventory_db  
+       
+  order-service:
     build:
-      context: ./frontend  # Build context for the React front-end
+      context: ./order-microservice  
     ports:
-      - "3001:3000"  # Expose the React front-end on port 3001
+      - "6003:6003"  
+    environment:
+      DB_HOST: inventory_db   
+      DB_PORT: 3306  
+      DB_USER: root  
+      DB_PASS: 123456  
+      DB_NAME: inventory_db  
     depends_on:
-      - product-service  # Ensure back-end service starts first
+      - inventory_db  
+
+  shipping_logistics_services:
+    build: 
+      context: ./shipping-logistics-service  # Build from the current directory
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306  # Port MySQL is using in the container
+      DB_USER: root  # Use root as the database user
+      DB_PASSWORD:  # No password
+      DB_NAME: shipping_logistics
+    depends_on:
+      - mysql  # Ensure MySQL starts before the service
+    ports:
+      - "3001:3001" 
+                 
+
+  frontend:
+      build: ./frontend
+      container_name: frontend_container
+      stdin_open: true
+      ports:
+        - "3000:3000"
+      networks:
+        - random-number-app
+      volumes:
+        - ./frontend:/app
+        - /app/node_modules
+
+  inventory_db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456 
+    volumes:
+      - db_data:/var/lib/mysql            
+      # - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql  # SQL initialization script
+    ports:
+      - "3307:3306" 
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'  
+      MYSQL_ROOT_HOST: '%'  
+      MYSQL_DATABASE: shipping_logistics  
+    volumes:
+      - mysql-data:/var/lib/mysql 
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3308:3306" 
+
+
+networks:
+  random-number-app:
+    driver: bridge
+
 volumes:
   db_data:  # Persistent volume for MySQL data
+  mysql-data:
+   driver: local
